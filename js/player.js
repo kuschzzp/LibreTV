@@ -645,6 +645,11 @@ function initPlayer(videoUrl) {
 
     // 播放器加载完成后初始隐藏工具栏
     art.on('ready', () => {
+        setTimeout(() => {
+            if (fullscreenEnabled || fullscreenWebEnabled) {
+                art.fullscreen = true;
+            }
+        }, 100);
         hideControls();
     });
 
@@ -943,12 +948,6 @@ function playEpisode(index) {
 
     if (isWebkit) {
         initPlayer(url);
-        if (fullscreenEnabled) {
-            art.fullscreen = true;
-        }
-        if (fullscreenWebEnabled) {
-            art.fullscreenWeb = true;
-        }
     } else {
         art.switch = url;
     }
