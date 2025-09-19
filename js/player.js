@@ -86,6 +86,8 @@ let currentEpisodes = [];
 let episodesReversed = false;
 let autoplayEnabled = true; // 默认开启自动连播
 let videoHasEnded = false; // 跟踪视频是否已经自然结束
+let fullscreenEnabled = false; // 是否全屏状态
+let fullscreenWebEnabled = false; // 是否网页全屏状态
 let userClickedPosition = null; // 记录用户点击的位置
 let shortcutHintTimeout = null; // 用于控制快捷键提示显示时间
 let adFilteringEnabled = true; // 默认开启广告过滤
@@ -615,6 +617,13 @@ function initPlayer(videoUrl) {
     // 全屏状态切换时注册/移除 mouseout 事件，监听鼠标移出屏幕事件
     // 从而对播放器状态栏进行隐藏倒计时
     function handleFullScreen(isFullScreen, isWeb) {
+        if (isWeb) {
+            fullscreenWebEnabled = isFullScreen;
+            fullscreenEnabled = art.fullscreen;
+        } else {
+            fullscreenEnabled = isFullScreen;
+            fullscreenWebEnabled = art.fullscreenWeb;
+        }
         if (isFullScreen) {
             document.addEventListener('mouseout', handleMouseOut);
         } else {
@@ -934,6 +943,12 @@ function playEpisode(index) {
 
     if (isWebkit) {
         initPlayer(url);
+        if (fullscreenEnabled) {
+            art.fullscreen = true;
+        }
+        if (fullscreenWebEnabled) {
+            art.fullscreenWeb = true;
+        }
     } else {
         art.switch = url;
     }
