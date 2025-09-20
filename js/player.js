@@ -86,8 +86,6 @@ let currentEpisodes = [];
 let episodesReversed = false;
 let autoplayEnabled = true; // 默认开启自动连播
 let videoHasEnded = false; // 跟踪视频是否已经自然结束
-let fullscreenEnabled = false; // 是否全屏状态
-let fullscreenWebEnabled = false; // 是否网页全屏状态
 let userClickedPosition = null; // 记录用户点击的位置
 let shortcutHintTimeout = null; // 用于控制快捷键提示显示时间
 let adFilteringEnabled = true; // 默认开启广告过滤
@@ -473,6 +471,21 @@ function initPlayer(videoUrl) {
         moreVideoAttr: {
             crossOrigin: 'anonymous',
         },
+        controls: [
+            {
+                name: 'nextEpisode',
+                position: 'left',
+                index: 12,
+                tooltip: '下一集',
+                style: {
+                    opacity: 0.5,
+                },
+                html: `<svg class="icon" viewBox="0 0 1024 1024" width="22" height="22">
+                    <path d="M665.47 417.65l-345.03-244.3c-69.8-49.42-166.29 0.49-166.29 86.01v502.27c0 85.52 96.49 135.43 166.29 86.01l345.03-244.31c64.02-45.34 64.02-140.34 0-185.68zM811.82 868.52c-30.38 0-55-24.62-55-55V207.46c0-30.38 24.62-55 55-55s55 24.62 55 55v606.07c0 30.37-24.62 54.99-55 54.99z" />
+                </svg>`,
+                click: () => playNextEpisode(),
+            },
+        ],
         customType: {
             m3u8: function (video, url) {
                 // 清理之前的HLS实例
@@ -582,7 +595,10 @@ function initPlayer(videoUrl) {
                     document.getElementById('player-loading').style.display = 'none';
                 });
             }
-        }
+        },
+        plugins: [
+            fullscreenNextBtnPlugin(),
+        ]
     });
 
     // artplayer 没有 'fullscreenWeb:enter', 'fullscreenWeb:exit' 等事件
@@ -617,13 +633,6 @@ function initPlayer(videoUrl) {
     // 全屏状态切换时注册/移除 mouseout 事件，监听鼠标移出屏幕事件
     // 从而对播放器状态栏进行隐藏倒计时
     function handleFullScreen(isFullScreen, isWeb) {
-        if (isWeb) {
-            fullscreenWebEnabled = isFullScreen;
-            fullscreenEnabled = art.fullscreen;
-        } else {
-            fullscreenEnabled = isFullScreen;
-            fullscreenWebEnabled = art.fullscreenWeb;
-        }
         if (isFullScreen) {
             document.addEventListener('mouseout', handleMouseOut);
         } else {
@@ -645,11 +654,6 @@ function initPlayer(videoUrl) {
 
     // 播放器加载完成后初始隐藏工具栏
     art.on('ready', () => {
-        setTimeout(() => {
-            if (fullscreenEnabled || fullscreenWebEnabled) {
-                art.fullscreen = true;
-            }
-        }, 100);
         hideControls();
     });
 
@@ -833,6 +837,7 @@ function showError(message) {
 
 // 更新集数信息
 function updateEpisodeInfo() {
+    modifyNextButtonStyle();
     if (currentEpisodes.length > 0) {
         document.getElementById('episodeInfo').textContent = `第 ${currentEpisodeIndex + 1}/${currentEpisodes.length} 集`;
     } else {
@@ -949,7 +954,7 @@ function playEpisode(index) {
     if (isWebkit) {
         initPlayer(url);
     } else {
-        art.switch = url;
+        art && (art.switch = url);
     }
 
     // 更新UI
@@ -1803,5 +1808,74 @@ async function switchToResource(sourceKey, vodId) {
         showToast('切换资源失败，请稍后重试', 'error');
     } finally {
         hideLoading();
+    }
+}
+
+// 修改控制条下一集按钮样式
+function modifyNextButtonStyle() {
+    const nextButton = document.querySelector('.art-control-nextEpisode');
+    if (!nextButton) {
+        return;
+    }
+    if (currentEpisodeIndex < currentEpisodes.length - 1) {
+        nextButton.style.opacity = 1;
+    } else {
+        nextButton.style.opacity = 0.5;
+    }
+}
+
+// 全屏模式添加下一集按钮
+function fullscreenNextBtnPlugin() {
+    return (art) => {
+        art.layers.add({
+            name: 'fullscreenNextBtn',
+            html: `<div id="fullscreenNextBtn">
+                  <svg viewBox="0 0 1024 1024" width="64" height="64">
+                      <path d="M0 512c0 282.8 229.2 512 512 512s512-229.2 512-512S794.8 0 512 0 0 229.2 0 512z m629-162.5c0-17.9 14.5-32.5 32.5-32.5 17.9 0 32.5 14.5 32.5 32.5v325c0 17.9-14.5 32.5-32.5 32.5-17.9 0-32.5-14.5-32.5-32.5v-325z m-299 8.3c0-22.2 25.1-35.3 43.7-22.8l110.1 73.9 120 80.5c16.3 10.9 16.3 34.6 0 45.5l-120 80.5-110.1 73.9c-18.5 12.4-43.7-0.7-43.7-22.8V357.8z" fill="#ffffff" />
+                  </svg>
+            </div>`,
+            style: {
+                position: 'absolute',
+                top: '50%',
+                right: '10px',
+                transform: 'translateY(-50%)',
+                zIndex: 100,
+                opacity: 0,
+                pointerEvents: 'none',
+                transition: 'opacity 0.3s ease',
+            },
+            click: () => playNextEpisode(),
+        });
+
+        const nextBtn = document.querySelector('.art-layer-fullscreenNextBtn');
+        const hideFullscreenNextBtn = () => {
+            nextBtn.style.opacity = 0;
+            nextBtn.style.pointerEvents = 'none';
+        }
+        const showFullscreenNextBtn = () => {
+            const hasNext = currentEpisodeIndex < currentEpisodes.length - 1;
+            const isEnd = art.video.ended;
+            const isFullscreen = art.fullscreen || art.fullscreenWeb;
+            if (hasNext && isEnd && isFullscreen) {
+                nextBtn.style.opacity = 0.8;
+                nextBtn.style.pointerEvents = 'all';
+            } else {
+                hideFullscreenNextBtn();
+            }
+        }
+
+        // 显示/隐藏逻辑
+        art.on('video:ended', showFullscreenNextBtn);
+        art.on('video:play', hideFullscreenNextBtn);
+        art.on('fullscreen', showFullscreenNextBtn);
+        art.on('fullscreenWeb', showFullscreenNextBtn);
+        art.on('fullscreenExit', hideFullscreenNextBtn);
+        art.on('fullscreenWebExit', hideFullscreenNextBtn);
+
+        return {
+            name: 'fullscreenNextBtn',
+            showFullscreenNextBtn,
+            hideFullscreenNextBtn,
+        }
     }
 }
