@@ -434,6 +434,20 @@ export async function onRequest(context) {
             return createResponse("无效的代理请求。路径应为 /proxy/<经过编码的URL>", 400);
         }
 
+        // 测试端点：验证请求头是否被正确发送 ============================
+        if (targetUrl === 'test-doudou') {
+            const testUrl = 'https://httpbin.org/headers';
+            const testHeaders = new Headers({
+                'User-Agent': 'LibreTV-Proxy-Test',
+                'Referer': 'https://movie.douban.com/explore',
+                'X-Custom-Header': 'test-value'
+            });
+            const testResponse = await fetch(testUrl, { headers: testHeaders });
+            const testResult = await testResponse.text();
+            return createResponse(testResult, 200, { 'Content-Type': 'application/json' });
+        }
+        // 测试端点：验证请求头是否被正确发送 ============================
+
         logDebug(`收到代理请求: ${targetUrl}`);
 
         // --- 缓存检查 (KV) ---
