@@ -148,14 +148,22 @@ app.get('/proxy/:encodedUrl', async (req, res) => {
     
     const makeRequest = async () => {
       try {
+        // console.log('正在请求:===> ', targetUrl)
+
+        const headers = {
+          'User-Agent': config.userAgent
+        };
+        // 只有目标 URL 包含 "doubanio.com" 时才添加 Referer
+        if (targetUrl.includes('doubanio.com')) {
+          headers['Referer'] = 'https://movie.douban.com/explore';
+        }
+
         return await axios({
           method: 'get',
           url: targetUrl,
           responseType: 'stream',
           timeout: config.timeout,
-          headers: {
-            'User-Agent': config.userAgent
-          }
+          headers: headers
         });
       } catch (error) {
         if (retries < maxRetries) {
