@@ -179,9 +179,15 @@ export async function onRequest(context) {
             'Accept': '*/*',
             // 尝试传递一些原始请求的头信息
             'Accept-Language': request.headers.get('Accept-Language') || 'zh-CN,zh;q=0.9,en;q=0.8',
-            // 尝试设置 Referer 为目标网站的域名，或者传递原始 Referer
-            'Referer': request.headers.get('Referer') || new URL(targetUrl).origin
         });
+
+        // 只有目标 URL 包含 "doubanio.com" 添加指定Referer
+        if (targetUrl.includes('doubanio.com')) {
+            headers.set('Referer', 'https://movie.douban.com/explore');
+        }else {
+            // 尝试设置 Referer 为目标网站的域名，或者传递原始 Referer
+            headers.set('Referer', request.headers.get('Referer') || new URL(targetUrl).origin);
+        }
 
         try {
             // 直接请求目标 URL
