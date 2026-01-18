@@ -435,7 +435,7 @@ export async function onRequest(context) {
         }
 
         // 测试端点：验证请求头是否被正确发送 ============================
-        if (targetUrl === 'test-doudou') {
+        if (targetUrl === 'https://test-doudou') {
             const testUrl = 'https://httpbin.org/headers';
             const testHeaders = new Headers({
                 'User-Agent': 'LibreTV-Proxy-Test',
