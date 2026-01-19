@@ -179,17 +179,9 @@ export async function onRequest(context) {
             'Accept': '*/*',
             // 尝试传递一些原始请求的头信息
             'Accept-Language': request.headers.get('Accept-Language') || 'zh-CN,zh;q=0.9,en;q=0.8',
+            // 尝试设置 Referer 为目标网站的域名，或者传递原始 Referer
+            'Referer': request.headers.get('Referer') || new URL(targetUrl).origin
         });
-
-        // 只有目标 URL 包含 "doubanio.com" 添加指定Referer
-        if (targetUrl.includes('doubanio.com')) {
-            headers.set('Referer', 'https://movie.douban.com');
-            logDebug(`[Referer] doubanio.com 检测到，设置 Referer: https://movie.douban.com`);
-        }else {
-            const refererValue = request.headers.get('Referer') || new URL(targetUrl).origin;
-            headers.set('Referer', refererValue);
-            logDebug(`[Referer] 设置 Referer: ${refererValue}`);
-        }
 
         // 输出所有请求头用于调试
         logDebug(`[Headers] 请求头: ${JSON.stringify(Object.fromEntries(headers.entries()))}`);
