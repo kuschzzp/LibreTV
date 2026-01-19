@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(lsof:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(git diff:*)"
     ]
   }
 }
