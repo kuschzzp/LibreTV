@@ -174,6 +174,12 @@ export async function onRequest(context) {
 
     // 获取远程内容及其类型
     async function fetchContentWithType(targetUrl) {
+
+        targetUrl = targetUrl.replace(
+            /img\d+\.doubanio\.com/g,
+            'img.doubanio.cmliussss.com'
+        );
+
         const headers = new Headers({
             'User-Agent': getRandomUserAgent(),
             'Accept': '*/*',
