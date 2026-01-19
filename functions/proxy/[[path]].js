@@ -183,8 +183,8 @@ export async function onRequest(context) {
 
         // 只有目标 URL 包含 "doubanio.com" 添加指定Referer
         if (targetUrl.includes('doubanio.com')) {
-            headers.set('Referer', 'https://movie.douban.com/explore');
-            logDebug(`[Referer] doubanio.com 检测到，设置 Referer: https://movie.douban.com/explore`);
+            headers.set('Referer', 'https://movie.douban.com');
+            logDebug(`[Referer] doubanio.com 检测到，设置 Referer: https://movie.douban.com`);
         }else {
             const refererValue = request.headers.get('Referer') || new URL(targetUrl).origin;
             headers.set('Referer', refererValue);
@@ -434,19 +434,6 @@ export async function onRequest(context) {
             return createResponse("无效的代理请求。路径应为 /proxy/<经过编码的URL>", 400);
         }
 
-        // 测试端点：验证请求头是否被正确发送 ============================
-        if (targetUrl === 'https://test-doudou') {
-            const testUrl = 'https://httpbin.org/headers';
-            const testHeaders = new Headers({
-                'User-Agent': 'LibreTV-Proxy-Test',
-                'Referer': 'https://movie.douban.com/explore',
-                'X-Custom-Header': 'test-value'
-            });
-            const testResponse = await fetch(testUrl, { headers: testHeaders });
-            const testResult = await testResponse.text();
-            return createResponse(testResult, 200, { 'Content-Type': 'application/json' });
-        }
-        // 测试端点：验证请求头是否被正确发送 ============================
 
         logDebug(`收到代理请求: ${targetUrl}`);
 
