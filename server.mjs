@@ -145,25 +145,20 @@ app.get('/proxy/:encodedUrl', async (req, res) => {
     // 添加请求超时和重试逻辑
     const maxRetries = config.maxRetries;
     let retries = 0;
-    
+
     const makeRequest = async () => {
       try {
-        // console.log('正在请求:===> ', targetUrl)
-
-        const headers = {
-          'User-Agent': config.userAgent
-        };
-        // 只有目标 URL 包含 "doubanio.com" 时才添加 Referer
-        if (targetUrl.includes('doubanio.com')) {
-          headers['Referer'] = 'https://movie.douban.com/explore';
-        }
-
+        console.log('正在请求:===> ', targetUrl)
+        // console.log('正在请求22:===> ', req.headers)
         return await axios({
           method: 'get',
           url: targetUrl,
           responseType: 'stream',
           timeout: config.timeout,
-          headers: headers
+          headers: {
+            'User-Agent': config.userAgent,
+            'Referer': new URL(targetUrl).origin
+          }
         });
       } catch (error) {
         if (retries < maxRetries) {
